@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DASS-21 Questionnaire</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f6fa;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .question {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-left: 4px solid var(--secondary-color);
+            background-color: #f8f9fa;
+        }
+
+        .options {
+            margin-top: 10px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .option-label:hover {
+            background-color: #e9ecef;
+        }
+
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .category-result {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+
+        .severity {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .disclaimer {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 30px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DASS-21 Questionnaire</h1>
+        <div id="questionnaire"></div>
+        <button onclick="submitQuestionnaire()">Submit Answers</button>
+        <div id="results" class="results"></div>
+        <p class="disclaimer">Note: This assessment is not a diagnostic tool. Please consult a mental health professional for clinical evaluation.</p>
+    </div>
+
+    <script>
+        // DASS-21 questions structure
+        const questions = [
+            { category: "Stress", text: "I found it hard to wind down" },
+            { category: "Anxiety", text: "I was aware of dryness of my mouth" },
+            { category: "Depression", text: "I couldn't seem to experience any positive feeling at all" },
+            { category: "Anxiety", text: "I experienced breathing difficulty (e.g. excessively rapid breathing, breathlessness in the absence of physical exertion)" },
+            { category: "Depression", text: "I found it difficult to work up the initiative to do things" },
+            { category: "Stress", text: "I tended to over-react to situations" },
+            { category: "Anxiety", text: "I experienced trembling (e.g. in the hands)" },
+            { category: "Stress", text: "I felt that I was using a lot of nervous energy" },
+            { category: "Anxiety", text: "I was worried about situations in which I might panic and make a fool of myself" },
+            { category: "Depression", text: "I felt that I had nothing to look forward to" },
+            { category: "Stress", text: "I found myself getting agitated" },
+            { category: "Stress", text: "I found it difficult to relax" },
+            { category: "Depression", text: "I felt down-hearted and blue" },
+            { category: "Stress", text: "I was intolerant of anything that kept me from getting on with what I was doing" },
+            { category: "Anxiety", text: "I felt I was close to panic" },
+            { category: "Depression", text: "I was unable to become enthusiastic about anything" },
+            { category: "Depression", text: "I felt I wasn't worth much as a person" },
+            { category: "Stress", text: "I felt that I was rather touchy" },
+            { category: "Anxiety", text: "I was aware of the action of my heart in the absence of physical exertion (e.g. sense of heart rate increase, heart missing a beat)" },
+            { category: "Anxiety", text: "I felt scared without any good reason" },
+            { category: "Depression", text: "I felt that life was meaningless" }
+        ];
+
+        // Severity classification ranges
+        const severityRanges = {
+            Depression: [
+                { level: "Normal", min: 0, max: 9 },
+                { level: "Mild", min: 10, max: 13 },
+                { level: "Moderate", min: 14, max: 20 },
+                { level: "Severe", min: 21, max: 27 },
+                { level: "Extremely Severe", min: 28, max: 100 }
+            ],
+            Anxiety: [
+                { level: "Normal", min: 0, max: 7 },
+                { level: "Mild", min: 8, max: 9 },
+                { level: "Moderate", min: 10, max: 14 },
+                { level: "Severe", min: 15, max: 19 },
+                { level: "Extremely Severe", min: 20, max: 100 }
+            ],
+            Stress: [
+                { level: "Normal", min: 0, max: 14 },
+                { level: "Mild", min: 15, max: 18 },
+                { level: "Moderate", min: 19, max: 25 },
+                { level: "Severe", min: 26, max: 33 },
+                { level: "Extremely Severe", min: 34, max: 100 }
+            ]
+        };
+
+        // Initialize questionnaire
+        function initQuestionnaire() {
+            const container = document.getElementById('questionnaire');
+            questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                questionDiv.innerHTML = `
+                    <p>${index + 1}. ${question.text}</p>
+                    <div class="options">
+                        <label class="option-label">
+                            <input type="radio" name="q${index}" value="0" required>
+                            Did not apply to me at all
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q${index}" value="1">
+                            Applied to some degree/some time
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q${index}" value="2">
+                            Applied considerable degree/good part of time
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="q${index}" value="3">
+                            Applied very much/most of the time
+                        </label>
+                    </div>
+                `;
+                container.appendChild(questionDiv);
+            });
+        }
+
+        // Calculate scores
+        function calculateScores() {
+            const answers = [];
+            questions.forEach((_, index) => {
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                answers.push(selected ? parseInt(selected.value) : 0);
+            });
+
+            const depression = answers.slice(0, 7).reduce((a, b) => a + b, 0) * 2;
+            const anxiety = answers.slice(7, 14).reduce((a, b) => a + b, 0) * 2;
+            const stress = answers.slice(14, 21).reduce((a, b) => a + b, 0) * 2;
+
+            return { depression, anxiety, stress };
+        }
+
+        // Get severity level
+        function getSeverity(score, category) {
+            const ranges = severityRanges[category];
+            return ranges.find(range => score >= range.min && score <= range.max)?.level || 'Unknown';
+        }
+
+        // Handle form submission
+        function submitQuestionnaire() {
+            // Validate all answers
+            const unanswered = questions.some((_, index) => 
+                !document.querySelector(`input[name="q${index}"]:checked`)
+            );
+
+            if (unanswered) {
+                alert('Please answer all questions before submitting.');
+                return;
+            }
+
+            // Calculate results
+            const scores = calculateScores();
+            const results = {
+                Depression: {
+                    score: scores.depression,
+                    severity: getSeverity(scores.depression, 'Depression')
+                },
+                Anxiety: {
+                    score: scores.anxiety,
+                    severity: getSeverity(scores.anxiety, 'Anxiety')
+                },
+                Stress: {
+                    score: scores.stress,
+                    severity: getSeverity(scores.stress, 'Stress')
+                }
+            };
+
+            // Display results
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h2>Your Results</h2>
+                ${Object.entries(results).map(([category, data]) => `
+                    <div class="category-result">
+                        <h3>${category}</h3>
+                        <p>Score: ${data.score}</p>
+                        <p class="severity">${data.severity}</p>
+                    </div>
+                `).join('')}
+            `;
+            resultsDiv.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Initialize on page load
+        window.onload = initQuestionnaire;
+    </script>
+</body>
+</html>
