@@ -200,6 +200,7 @@
         function calculateScores() {
             const answers = [];
             questions.forEach((_, index) => {
+
                 const selected = document.querySelector(`input[name="q${index}"]:checked`);
                 answers.push(selected ? parseInt(selected.value) : 0);
             });
